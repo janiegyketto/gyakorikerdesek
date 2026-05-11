@@ -72,26 +72,29 @@ $hozzaszolasok = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         </div>
 
         <div class="hozzaszolasok">
-            <h2>Válaszok (<?= count($hozzaszolasok) ?>)</h2>
-            <?php if (count($hozzaszolasok) > 0): ?>
-                <?php foreach ($hozzaszolasok as $hozzaszolas): ?>
-                    <div class="kartya">
-                        <p><?= nl2br(htmlspecialchars($hozzaszolas['tartalom'])) ?></p>
-                        <small>Írta: <?= htmlspecialchars($hozzaszolas['felhasznalonev']) ?> - <?= date("Y-m-d H:i", strtotime($hozzaszolas['letrehozva'])) ?></small>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <p>Még nincs válasz. Légy az első!</p>
-            <?php endif; ?>
+            <h2>Válaszok (<span id="valaszokSzama"><?= count($hozzaszolasok) ?></span>)</h2>
+            <div id="valaszokListaja">
+                <?php if (count($hozzaszolasok) > 0): ?>
+                    <?php foreach ($hozzaszolasok as $hozzaszolas): ?>
+                        <div class="kartya" id="valasz-<?= $hozzaszolas['id'] ?>">
+                            <p><?= nl2br(htmlspecialchars($hozzaszolas['tartalom'])) ?></p>
+                            <small>Írta: <?= htmlspecialchars($hozzaszolas['felhasznalonev']) ?> - <?= date("Y-m-d H:i", strtotime($hozzaszolas['letrehozva'])) ?></small>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p id="nincsValaszUzenet">Még nincs válasz. Légy az első!</p>
+                <?php endif; ?>
+            </div>
         </div>
 
         <?php if ($bejelentkezett): ?>
             <div class="uj-hozzaszolas">
                 <h3>Írj egy választ</h3>
-                <form method="POST" action="hozzaszolasMentes.php">
-                    <input type="hidden" name="kerdes_id" value="<?= $kerdes_id ?>">
-                    <textarea name="tartalom" rows="4" placeholder="Írd ide a válaszod..." required></textarea>
-                    <button type="submit">Válasz küldése</button>
+                <form id="valaszForm">
+                    <input type="hidden" name="kerdes_id" id="kerdes_id" value="<?= $kerdes_id ?>">
+                    <textarea name="tartalom" id="valaszTartalom" rows="4" placeholder="Írd ide a válaszod..." required></textarea>
+                    <div id="valaszHiba" class="hiba"></div>
+                    <button type="submit" id="kuldesGomb">Válasz küldése</button>
                 </form>
             </div>
         <?php else: ?>
@@ -108,6 +111,70 @@ $hozzaszolasok = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             document.body.classList.add('light');
             document.body.classList.remove('dark');
         }
+        
+        <?php if ($bejelentkezett): ?>
+        const valaszForm = document.getElementById('valaszForm');
+        const valaszTartalom = document.getElementById('valaszTartalom');
+        const valaszHiba = document.getElementById('valaszHiba');
+        const kuldesGomb = document.getElementById('kuldesGomb');
+        const valaszokListaja = document.getElementById('valaszokListaja');
+        const valaszokSzama = document.getElementById('valaszokSzama');
+        
+        valaszForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const tartalom = valaszTartalom.value.trim();
+            if (tartalom === '') {
+                valaszHiba.textContent = 'A válasz nem lehet üres!';
+                return;
+            }
+            
+            valaszHiba.textContent = '';
+            kuldesGomb.disabled = true;
+            kuldesGomb.textContent = 'Küldés...';
+            
+            const formData = new FormData();
+            formData.append('tartalom', tartalom);
+            formData.append('kerdes_id', document.getElementById('kerdes_id').value);
+            
+            fetch('hozzaszolasMentes.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const nincsValasz = document.getElementById('nincsValaszUzenet');
+                    if (nincsValasz) {
+                        nincsValasz.remove();
+                    }
+                    
+                    const ujValasz = document.createElement('div');
+                    ujValasz.className = 'kartya';
+                    ujValasz.id = 'valasz-' + data.id;
+                    ujValasz.innerHTML = `
+                        <p>${data.tartalom}</p>
+                        <small>Írta: ${data.felhasznalonev} - ${data.letrehozva}</small>
+                    `;
+                    valaszokListaja.appendChild(ujValasz);
+                    
+                    const jelenlegiSzam = parseInt(valaszokSzama.textContent);
+                    valaszokSzama.textContent = jelenlegiSzam + 1;
+                    
+                    valaszTartalom.value = '';
+                } else {
+                    valaszHiba.textContent = data.error;
+                }
+            })
+            .catch(error => {
+                valaszHiba.textContent = 'Hiba történt a küldés során!';
+            })
+            .finally(() => {
+                kuldesGomb.disabled = false;
+                kuldesGomb.textContent = 'Válasz küldése';
+            });
+        });
+        <?php endif; ?>
     </script>
 </body>
 </html>
