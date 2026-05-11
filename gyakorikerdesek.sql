@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS gyakorikerdesek;
+CREATE DATABASE gyakorikerdesek;
 USE gyakorikerdesek;
 
 CREATE TABLE felhasznalok (
