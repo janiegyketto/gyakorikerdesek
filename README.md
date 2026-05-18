@@ -4,7 +4,8 @@ Váradi János és Vass Sándor:
 IKT Projektmunka javító projekt
 
 Sanyi: bejelentkezes/regisztracio, fooldal, profil
-Jani: kerdesek,hozzaszolasok kialakitasa, sql
+
+Jani: fooldal, kerdesek,hozzaszolasok kialakitasa, sql
 
 Elkészűlt műveletek:
 
