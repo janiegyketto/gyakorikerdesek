@@ -35,6 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="kerdesFelvetel.php">Kérdés feltevése</a>
         <a href="profil.php">Profilom</a>
         <a href="beallitasok.php">Beállítások</a>
+        <?php if ($bejelentkezett['szerepkor'] === 'admin' || $bejelentkezett['szerepkor'] === 'moderator'): ?>
+            <a href="admin.php">Admin panel</a>
+        <?php endif; ?>
         <a href="kilepes.php">Kilépés</a>
     </nav>
     <main>

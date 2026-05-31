@@ -2,13 +2,29 @@
 require_once 'beallitas.php';
 $bejelentkezett = getBejelentkezettFelhasznalo($kapcsolat);
 
-$eredmeny = $kapcsolat->query("
-    SELECT k.*, f.felhasznalonev 
-    FROM kerdesek k 
-    JOIN felhasznalok f ON k.felhasznalo_id = f.id 
-    ORDER BY k.letrehozva DESC
-");
-$kerdesek = $eredmeny->fetch_all(MYSQLI_ASSOC);
+$kereses = isset($_GET['s']) ? trim($_GET['s']) : '';
+
+if (!empty($kereses)) {
+    $stmt = $kapcsolat->prepare("
+        SELECT k.*, f.felhasznalonev 
+        FROM kerdesek k 
+        JOIN felhasznalok f ON k.felhasznalo_id = f.id 
+        WHERE k.cim LIKE ? OR k.tartalom LIKE ? 
+        ORDER BY k.letrehozva DESC
+    ");
+    $param = "%" . $kereses . "%";
+    $stmt->bind_param("ss", $param, $param);
+    $stmt->execute();
+    $kerdesek = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+} else {
+    $eredmeny = $kapcsolat->query("
+        SELECT k.*, f.felhasznalonev 
+        FROM kerdesek k 
+        JOIN felhasznalok f ON k.felhasznalo_id = f.id 
+        ORDER BY k.letrehozva DESC
+    ");
+    $kerdesek = $eredmeny->fetch_all(MYSQLI_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -25,6 +41,9 @@ $kerdesek = $eredmeny->fetch_all(MYSQLI_ASSOC);
             <a href="kerdesFelvetel.php">Kérdés feltevése</a>
             <a href="profil.php">Profilom</a>
             <a href="beallitasok.php">Beállítások</a>
+            <?php if ($bejelentkezett['szerepkor'] === 'admin' || $bejelentkezett['szerepkor'] === 'moderator'): ?>
+                <a href="admin.php">Admin panel</a>
+            <?php endif; ?>
             <a href="kilepes.php">Kilépés</a>
         <?php else: ?>
             <a href="bejelentkezes.php">Bejelentkezés</a>
@@ -33,6 +52,11 @@ $kerdesek = $eredmeny->fetch_all(MYSQLI_ASSOC);
         <?php endif; ?>
     </nav>
     <main>
+        <form method="GET" action="index.php" class="egyedi-kereso-szekcio">
+            <input type="text" name="s" placeholder="Keresés a kérdések között..." value="<?= htmlspecialchars($kereses) ?>" class="egyedi-kereso-mezo">
+            <button type="submit" class="egyedi-kereso-gomb">Keresés</button>
+        </form>
+
         <h1>Kérdések</h1>
         <?php if (count($kerdesek) > 0): ?>
             <?php foreach ($kerdesek as $kerdes): ?>
@@ -42,15 +66,16 @@ $kerdesek = $eredmeny->fetch_all(MYSQLI_ASSOC);
                     </a>
                     <p><?= nl2br(htmlspecialchars(substr($kerdes['tartalom'], 0, 200))) ?>...</p>
                     <small>Kérdezte: <?= htmlspecialchars($kerdes['felhasznalonev']) ?> - <?= date("Y-m-d H:i", strtotime($kerdes['letrehozva'])) ?></small>
-                    <?php if ($bejelentkezett && $bejelentkezett['id'] == $kerdes['felhasznalo_id']): ?>
-                        <div class="gombok">
+                    
+                    <?php if ($bejelentkezett && ($bejelentkezett['id'] == $kerdes['felhasznalo_id'] || $bejelentkezett['szerepkor'] === 'admin' || $bejelentkezett['szerepkor'] === 'moderator')): ?>
+                        <div class="gombok" style="margin-top: 10px;">
                             <a href="kerdesTorles.php?id=<?= $kerdes['id'] ?>" class="torles-gomb" onclick="return confirm('Biztosan törlöd ezt a kérdést?')">Törlés</a>
                         </div>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
-            <p>Még nincs kérdés. Légy az első!</p>
+            <p>Nincs a keresésnek megfelelő kérdés.</p>
         <?php endif; ?>
     </main>
 

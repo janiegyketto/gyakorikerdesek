@@ -24,6 +24,17 @@ if (!$kerdes) {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hozzaszolas_torles'])) {
+    $h_id = $_POST['hozzaszolas_id'];
+    if ($bejelentkezett && ($bejelentkezett['szerepkor'] === 'admin' || $bejelentkezett['szerepkor'] === 'moderator')) {
+        $delStmt = $kapcsolat->prepare("DELETE FROM hozzaszolasok WHERE id = ?");
+        $delStmt->bind_param("i", $h_id);
+        $delStmt->execute();
+        header("Location: kerdes.php?id=" . $kerdes_id);
+        exit;
+    }
+}
+
 $stmt = $kapcsolat->prepare("
     SELECT h.*, f.felhasznalonev 
     FROM hozzaszolasok h 
@@ -50,6 +61,9 @@ $hozzaszolasok = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             <a href="kerdesFelvetel.php">Kérdés feltevése</a>
             <a href="profil.php">Profilom</a>
             <a href="beallitasok.php">Beállítások</a>
+            <?php if ($bejelentkezett['szerepkor'] === 'admin' || $bejelentkezett['szerepkor'] === 'moderator'): ?>
+                <a href="admin.php">Admin panel</a>
+            <?php endif; ?>
             <a href="kilepes.php">Kilépés</a>
         <?php else: ?>
             <a href="bejelentkezes.php">Bejelentkezés</a>
@@ -61,7 +75,7 @@ $hozzaszolasok = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         <div class="kerdes-reszlet">
             <div class="kerdes-fejlec">
                 <h1><?= htmlspecialchars($kerdes['cim']) ?></h1>
-                <?php if ($bejelentkezett && $bejelentkezett['id'] == $kerdes['felhasznalo_id']): ?>
+                <?php if ($bejelentkezett && ($bejelentkezett['id'] == $kerdes['felhasznalo_id'] || $bejelentkezett['szerepkor'] === 'admin' || $bejelentkezett['szerepkor'] === 'moderator')): ?>
                     <a href="kerdesTorles.php?id=<?= $kerdes['id'] ?>" class="torles-gomb" onclick="return confirm('Biztosan törlöd ezt a kérdést?')">Törlés</a>
                 <?php endif; ?>
             </div>
@@ -79,6 +93,12 @@ $hozzaszolasok = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                         <div class="kartya" id="valasz-<?= $hozzaszolas['id'] ?>">
                             <p><?= nl2br(htmlspecialchars($hozzaszolas['tartalom'])) ?></p>
                             <small>Írta: <?= htmlspecialchars($hozzaszolas['felhasznalonev']) ?> - <?= date("Y-m-d H:i", strtotime($hozzaszolas['letrehozva'])) ?></small>
+                            <?php if ($bejelentkezett && ($bejelentkezett['szerepkor'] === 'admin' || $bejelentkezett['szerepkor'] === 'moderator')): ?>
+                                <form method="POST" style="margin-top:5px; display:inline;">
+                                    <input type="hidden" name="hozzaszolas_id" value="<?= $hozzaszolas['id'] ?>">
+                                    <button type="submit" name="hozzaszolas_torles" class="torles-gomb" style="border:none; cursor:pointer;" onclick="return confirm('Törlöd ezt a hozzászólást?')">Moderálás (Törlés)</button>
+                                </form>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>

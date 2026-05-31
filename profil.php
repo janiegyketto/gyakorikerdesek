@@ -1,6 +1,7 @@
 <?php
 require_once 'beallitas.php';
 $bejelentkezett = getBejelentkezettFelhasznalo($kapcsolat);
+
 if (!$bejelentkezett) {
     header("Location: bejelentkezes.php");
     exit;
@@ -20,26 +21,22 @@ if (!$bejelentkezett) {
         <a href="kerdesFelvetel.php">Kérdés feltevése</a>
         <a href="profil.php">Profilom</a>
         <a href="beallitasok.php">Beállítások</a>
+        <?php if ($bejelentkezett['szerepkor'] === 'admin' || $bejelentkezett['szerepkor'] === 'moderator'): ?>
+            <a href="admin.php">Admin panel</a>
+        <?php endif; ?>
         <a href="kilepes.php">Kilépés</a>
     </nav>
     <main>
         <h1>Profilom</h1>
         <div class="kartya">
             <p><strong>Felhasználónév:</strong> <?= htmlspecialchars($bejelentkezett['felhasznalonev']) ?></p>
-            <p><strong>Email:</strong> <?= htmlspecialchars($bejelentkezett['email']) ?></p>
-            <p><strong>Regisztráció:</strong> <?= date("Y-m-d H:i", strtotime($bejelentkezett['regisztralva'])) ?></p>
+            <p><strong>Email cím:</strong> <?= htmlspecialchars($bejelentkezett['email']) ?></p>
+            <p><strong>Jogosultsági szint:</strong> <?= htmlspecialchars($bejelentkezett['szerepkor']) ?></p>
+            <p><strong>Regisztráció dátuma:</strong> <?= htmlspecialchars($bejelentkezett['regisztralva']) ?></p>
         </div>
     </main>
-
     <script>
-        const darkMode = localStorage.getItem('dark_mode');
-        if (darkMode === 'dark') {
-            document.body.classList.add('dark');
-            document.body.classList.remove('light');
-        } else {
-            document.body.classList.add('light');
-            document.body.classList.remove('dark');
-        }
+        if (localStorage.getItem('dark_mode') === 'dark') document.body.classList.add('dark');
     </script>
 </body>
 </html>
