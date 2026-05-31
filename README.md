@@ -13,18 +13,18 @@ Autentikáció ✓
 Profil ✓
 Adatbázis ✓
 Crud muveletek ✓
-Keresés/szűrés - rendezés ✗
+Keresés/szűrés - rendezés ✓
 Beállítások ✓
 Reszponzivitás ✓
-Szerepkorok ✗
-Admin felulet ✗
+Szerepkorok ✓
+Admin felulet ✓
 Jogosultság kezelés ✓
 Input validáció ✓
 
 Nem funkcionális követelmények:
-animációk ✗
+animációk ✓
 light/dark mode ✓
-ai_log ✗
+ai_log ✓
 
 Maradék 2 szabadon választható.
 -kommentelés ✓
